@@ -46,8 +46,11 @@ PostgreSQL / тестовые данные -> Iceberg в MinIO -> Trino SQL -> �
 │   └── check_services.sh
 ├── scripts/
 │   └── run_demo.sh
-└── docs/
-    └── architecture.md
+└── screenshots/
+    ├── demo-time-travel.png
+    ├── healthcheck.png
+    ├── minio-buckets.png
+    └── trino-query.png
 ```
 
 ## Быстрый запуск
