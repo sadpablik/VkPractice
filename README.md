@@ -2,6 +2,14 @@
 
 Первый этап домашнего задания: локальный mini-Lakehouse на Docker Compose с Trino, Iceberg, MinIO и PostgreSQL.
 
+На текущем этапе приоритет отдан демонстрации основного аналитического контура:
+
+```text
+PostgreSQL / тестовые данные -> Iceberg в MinIO -> Trino SQL -> аналитические запросы
+```
+
+Потоковый контур с Apache Kafka остаётся частью целевой архитектуры, но не входит в первый локальный MVP. Его реализация запланирована на следующие 6 месяцев развития платформы, после стабилизации хранения, SQL-доступа и базового ETL.
+
 ## Стек
 
 | Компонент | Назначение | URL / порт |
@@ -91,6 +99,37 @@ docker compose exec -T trino trino < sql/04_time_travel.sql
    - посмотреть `iceberg.demo."orders$snapshots"`;
    - взять старый `snapshot_id`;
    - выполнить `SELECT * FROM iceberg.demo.orders FOR VERSION AS OF <snapshot_id>;`.
+
+Итого в первом инкременте уже реализовано:
+
+- Docker Compose;
+- MinIO (S3);
+- PostgreSQL;
+- Trino;
+- Iceberg catalog;
+- создание Iceberg-таблиц;
+- загрузка тестовых данных;
+- SQL-запросы;
+- Federated JOIN;
+- Time Travel.
+
+## Что не входит в первый MVP
+
+Первый MVP не пытается поднять весь production-стек за один шаг. За рамками текущего этапа остаются:
+
+- полноценный Kafka pipeline;
+- ClickHouse-витрины;
+- Superset-дашборды;
+- OpenMetadata с lineage;
+- RBAC, мониторинг и production-конфигурация.
+
+Следующий реалистичный шаг разработки — добавить простой ETL-пайплайн:
+
+```text
+CSV / PostgreSQL -> Spark ETL -> Iceberg (S3/MinIO) -> Trino -> Superset
+```
+
+Kafka будет добавлена позже как отдельный streaming-контур. На текущем этапе её отсутствие не ломает архитектуру: уже реализованный MVP доказывает базовую идею Lakehouse через хранение, SQL-доступ и аналитику.
 
 ## Скриншоты для сдачи
 
