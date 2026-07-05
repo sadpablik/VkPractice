@@ -44,6 +44,8 @@
 
 ## Быстрый запуск
 
+Перед запуском должен быть включён Docker Desktop.
+
 ```bash
 docker compose up -d
 ```
@@ -109,4 +111,3 @@ docker compose down
 ```bash
 docker compose down -v
 ```
-
