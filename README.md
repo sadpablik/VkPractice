@@ -1,6 +1,6 @@
 # VK Practice: mini-Lakehouse in Docker
 
-Первый этап домашнего задания: локальный mini-Lakehouse на Docker Compose с Trino, Iceberg, MinIO и PostgreSQL.
+Локальный mini-Lakehouse на Docker Compose с Trino, Iceberg, MinIO и PostgreSQL.
 
 На текущем этапе приоритет отдан демонстрации основного аналитического контура:
 
@@ -17,7 +17,7 @@ PostgreSQL / тестовые данные -> Iceberg в MinIO -> Trino SQL -> �
 | Trino | SQL-движок, federated queries | http://localhost:8080 |
 | MinIO | S3-хранилище для Iceberg warehouse | http://localhost:9000 |
 | MinIO Console | UI для бакетов и объектов | http://localhost:9001 |
-| PostgreSQL | JDBC-каталог Iceberg + таблица `customers` | localhost:5432 |
+| PostgreSQL | JDBC-каталог Iceberg + справочники `customers`, `aircraft` | localhost:5432 |
 | Apache Iceberg | Табличный формат поверх S3 | catalog `iceberg` в Trino |
 
 Доступы для локального стенда:
@@ -36,16 +36,22 @@ PostgreSQL / тестовые данные -> Iceberg в MinIO -> Trino SQL -> �
 │   ├── iceberg.properties
 │   └── postgresql.properties
 ├── postgres/init/
-│   └── 01_customers.sql
+│   ├── 01_customers.sql
+│   └── 02_aircraft.sql
 ├── sql/
 │   ├── 01_create_schema.sql
 │   ├── 02_insert_orders.sql
 │   ├── 03_federated_join.sql
-│   └── 04_time_travel.sql
+│   ├── 04_time_travel.sql
+│   ├── 10_create_aviation_schema.sql
+│   ├── 11_insert_flights.sql
+│   ├── 12_aviation_analytics.sql
+│   └── 13_aviation_time_travel.sql
 ├── healthcheck/
 │   └── check_services.sh
 ├── scripts/
-│   └── run_demo.sh
+│   ├── run_demo.sh
+│   └── run_aviation_demo.sh
 └── screenshots/
     ├── demo-time-travel.png
     ├── healthcheck.png
@@ -80,6 +86,34 @@ chmod +x scripts/run_demo.sh healthcheck/check_services.sh
 ./healthcheck/check_services.sh
 ```
 
+## Демо для домашнего задания 2: авиалогистика
+
+Второй сценарий приземляет финальный проект команды на локальный стенд. Вместо абстрактных заказов используется учебная область авиалогистики:
+
+- `postgresql.public.aircraft` — справочник бортов: бортовой номер, тип ВС, базовый аэропорт, максимальная полезная нагрузка;
+- `iceberg.aviation.flight_events` — события рейсов: дата, аэропорты, груз, расход топлива, задержка, статус.
+
+Запуск:
+
+```bash
+chmod +x scripts/run_aviation_demo.sh
+./scripts/run_aviation_demo.sh
+```
+
+Что демонстрируется:
+
+1. Создание Iceberg-схемы `aviation`.
+2. Загрузка тестовых рейсов в `iceberg.aviation.flight_events`.
+3. Federated JOIN между Iceberg-таблицей рейсов и PostgreSQL-справочником бортов.
+4. Расчет простых метрик авиалогистики:
+   - количество рейсов по борту;
+   - суммарный перевезенный груз;
+   - средняя загрузка борта относительно максимальной полезной нагрузки;
+   - средняя задержка.
+5. Time Travel по таблице рейсов: исторический snapshot содержит 6 строк, текущая таблица после добавления рейса содержит 7 строк.
+
+Этот сценарий не заменяет production-платформу. Он показывает, как финальная задача команды может быть локально приземлена на текущий Lakehouse MVP без Kafka, ClickHouse, Superset и OpenMetadata.
+
 ## Ручной запуск SQL
 
 ```bash
@@ -87,6 +121,16 @@ docker compose exec -T trino trino < sql/01_create_schema.sql
 docker compose exec -T trino trino < sql/02_insert_orders.sql
 docker compose exec -T trino trino < sql/03_federated_join.sql
 docker compose exec -T trino trino < sql/04_time_travel.sql
+```
+
+Для авиационного сценария:
+
+```bash
+docker compose exec -T postgres psql -U trino -d metastore < postgres/init/02_aircraft.sql
+docker compose exec -T trino trino < sql/10_create_aviation_schema.sql
+docker compose exec -T trino trino < sql/11_insert_flights.sql
+docker compose exec -T trino trino < sql/12_aviation_analytics.sql
+docker compose exec -T trino trino < sql/13_aviation_time_travel.sql
 ```
 
 ## Что проверяется
