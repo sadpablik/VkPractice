@@ -17,7 +17,7 @@ run_query() {
 docker compose up -d
 
 printf '\n==> Waiting for Trino to become healthy'
-until curl -fsS http://localhost:8080/v1/info >/dev/null 2>&1; do
+until docker compose exec -T trino trino --execute "SELECT 1" >/dev/null 2>&1; do
   printf '.'
   sleep 3
 done
