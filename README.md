@@ -103,14 +103,14 @@ chmod +x scripts/run_aviation_demo.sh
 Что демонстрируется:
 
 1. Создание Iceberg-схемы `aviation`.
-2. Загрузка тестовых рейсов в `iceberg.aviation.flight_events`.
+2. Генерация 500 тестовых рейсов в `iceberg.aviation.flight_events`.
 3. Federated JOIN между Iceberg-таблицей рейсов и PostgreSQL-справочником бортов.
 4. Расчет простых метрик авиалогистики:
    - количество рейсов по борту;
    - суммарный перевезенный груз;
    - средняя загрузка борта относительно максимальной полезной нагрузки;
    - средняя задержка.
-5. Time Travel по таблице рейсов: исторический snapshot содержит 6 строк, текущая таблица после добавления рейса содержит 7 строк.
+5. Time Travel по таблице рейсов: исторический snapshot содержит 500 строк, текущая таблица после добавления рейса содержит 501 строку.
 
 Этот сценарий не заменяет production-платформу. Он показывает, как финальная задача команды может быть локально приземлена на текущий Lakehouse MVP без Kafka, ClickHouse, Superset и OpenMetadata.
 
@@ -131,6 +131,14 @@ docker compose exec -T trino trino < sql/10_create_aviation_schema.sql
 docker compose exec -T trino trino < sql/11_insert_flights.sql
 docker compose exec -T trino trino < sql/12_aviation_analytics.sql
 docker compose exec -T trino trino < sql/13_aviation_time_travel.sql
+```
+
+Быстрые проверки для записи видео:
+
+```bash
+docker compose exec -T trino trino --execute "SELECT count(*) FROM iceberg.aviation.flight_events;"
+docker compose exec -T trino trino --execute "SELECT * FROM iceberg.aviation.flight_events ORDER BY flight_id LIMIT 20;"
+docker compose exec -T trino trino --execute "SHOW TABLES FROM iceberg.aviation;"
 ```
 
 ## Что проверяется
